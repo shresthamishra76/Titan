@@ -1,0 +1,38 @@
+# Build output
+build/
+cmake-build-*/
+out/
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+compile_commands.json
+_deps/
+
+# Object/binary files
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Python tooling (future scripts)
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Model weights (never commit these)
+*.gguf
+*.safetensors
