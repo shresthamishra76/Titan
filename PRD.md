@@ -69,8 +69,9 @@ I have **no prior C++ experience** going into this project. C++ fluency is a fir
 2. **Milestone 2 (optimization)** — templates, move semantics, threading (`std::thread`, mutexes), SIMD intrinsics.
 
 Reference material alongside the papers below:
+
 - [cppreference.com](https://en.cppreference.com/) — canonical language/standard-library reference
-- *Effective Modern C++* (Scott Meyers) — idiomatic modern C++ (move semantics, smart pointers, templates)
+- _Effective Modern C++_ (Scott Meyers) — idiomatic modern C++ (move semantics, smart pointers, templates)
 
 Each Milestone 1–2 issue should note which C++ concept it's teaching, so the commit history reads as a legible progression, not just a feature list.
 
