@@ -6,15 +6,15 @@
 **Status:** Planning (begins after V1 complete)
 **Version:** 2.0
 **Duration:** Open-ended
-**Language:** C++20, CUDA, Python (Tooling), TypeScript (Dashboard)
+**Language:** C++20, Python (Tooling), TypeScript (Dashboard)
 
-> This is **V2**, the second phase of Titan. It assumes [PRD.md (V1)](PRD.md) is complete: a working tensor engine, GGUF model loader, tokenizer, CPU + basic CUDA transformer inference. V2 turns that inference core into a real production-style serving system — request scheduling, continuous batching, an OpenAI-compatible API, and a live dashboard.
+> This is **V2**, the second phase of Titan. It assumes [PRD.md (V1)](PRD.md) is complete: a working tensor engine, GGUF model loader, tokenizer, and CPU transformer inference. V2 turns that inference core into a real production-style serving system — request scheduling, continuous batching, an OpenAI-compatible API, and a live dashboard.
 
 ---
 
 # Vision
 
-Where V1 proved I could execute a transformer forward pass on CPU and GPU, V2 turns that into something that behaves like an actual inference server: multiple concurrent requests, a KV cache, continuous batching, streaming responses, and an OpenAI-compatible API surface that real client SDKs can talk to.
+Where V1 proved I could execute a transformer forward pass on CPU, V2 turns that into something that behaves like an actual inference server: multiple concurrent requests, a KV cache, continuous batching, streaming responses, and an OpenAI-compatible API surface that real client SDKs can talk to.
 
 This is the layer that sits between "I can run a model" and "I built something that resembles vLLM, TGI, or an internal serving stack at a frontier lab."
 
@@ -24,8 +24,6 @@ HTTP Request
 Scheduler          ← V2
       ↓
 Runtime            ← V1 (done)
-      ↓
-GPU Kernels        ← V1 (done)
       ↓
 Transformer Execution  ← V1 (done)
       ↓
@@ -44,10 +42,10 @@ Build the request-serving layer of a modern LLM runtime — KV cache, scheduler,
 
 V2 does not repeat V1 scope. It assumes as already built and stable:
 
-- Tensor Engine (CPU + CUDA)
+- Tensor Engine (CPU)
 - Model Loader (GGUF)
 - Tokenizer (BPE)
-- Transformer Runtime (single-request forward pass, CPU + CUDA)
+- Transformer Runtime (single-request forward pass, CPU)
 - Basic Sampling Engine (greedy, temperature, top-k, top-p)
 
 V2 adds the layers above and around that core. If V1 subsystems need rework to support batching/KV cache (e.g., the transformer runtime's forward-pass interface), that rework is in-scope for V2 but should be called out explicitly in the relevant issue as a "V1 revision," not silently redone.
@@ -70,7 +68,6 @@ Understand
 - Scheduling
 - KV cache management
 - Quantization
-- FlashAttention
 - Continuous batching
 - Production inference systems
 - Observability for ML systems
@@ -146,11 +143,11 @@ Same as V1: Learn by Building, Understand Before Optimizing, Measure Everything,
 
                    │
 
- Tensor Engine + CUDA Kernels
+        Tensor Engine
 
                    │
 
-      CPU Backend / GPU Backend
+          CPU Backend
 
                    │
 
@@ -227,23 +224,10 @@ Visualize
 
 - latency
 - throughput
-- GPU utilization
 - memory usage
 - KV cache usage
 - scheduler timeline
 - request lifecycle
-
----
-
-## CUDA Backend (advanced)
-
-Extends V1's basic CUDA kernels.
-
-Future
-
-- FlashAttention
-- Tensor Core kernels
-- kernel fusion
 
 ---
 
@@ -254,7 +238,6 @@ Benchmark against
 - PyTorch
 - llama.cpp
 - Titan CPU
-- Titan CUDA
 
 Measure
 
@@ -262,13 +245,12 @@ Measure
 - latency
 - throughput
 - memory
-- GPU utilization
 
 ---
 
 # Development Roadmap (V2)
 
-## Milestone 4
+## Milestone 3
 
 Inference Runtime
 
@@ -285,7 +267,7 @@ Serve multiple concurrent requests.
 
 ---
 
-## Milestone 5
+## Milestone 4
 
 Production Runtime
 
@@ -314,7 +296,7 @@ api/              # new in V2
 dashboard/        # new in V2
 ```
 
-All other directories (tensor/, cuda/, memory/, models/, tokenizer/, tests/, examples/, docs/) already exist from V1 and are extended, not recreated.
+All other directories (tensor/, memory/, models/, tokenizer/, tests/, examples/, docs/) already exist from V1 and are extended, not recreated.
 
 ---
 
@@ -326,7 +308,7 @@ Same as V1 — every major subsystem needs Overview, Design rationale, Architect
 
 # GitHub Workflow
 
-Same process as V1: every piece of work is a GitHub Issue with problem statement, motivation, acceptance criteria, implementation notes, references, related papers, stretch goals. Issues grouped into Milestones 4 and 5. Every merged issue leaves the repo in a working state.
+Same process as V1: every piece of work is a GitHub Issue with problem statement, motivation, acceptance criteria, implementation notes, references, related papers, stretch goals. Issues grouped into Milestones 3 and 4. Every merged issue leaves the repo in a working state.
 
 Since the repo is open-sourced and V1's commit/issue history already reads as a portfolio narrative, keep that standard for V2: PRs and issues should read as evidence of production-systems thinking (scheduling, concurrency, observability) to an external technical reviewer.
 
@@ -342,13 +324,12 @@ Same as V1: every feature needs implementation, tests, benchmarks, documentation
 
 Builds on V1's reading list. Additional core references for V2:
 
-- FlashAttention-2
 - vLLM
 - LLM.int8()
 - GPTQ
 - AWQ
 
-(Attention Is All You Need, RoFormer, FlashAttention, CUDA Programming Guide, llama.cpp, GGUF Spec carried over from V1.)
+(Attention Is All You Need, RoFormer, FlashAttention, llama.cpp, GGUF Spec carried over from V1.)
 
 ---
 
@@ -360,9 +341,9 @@ Titan V2 is successful if
 - It serves multiple concurrent requests via a working scheduler and continuous batching.
 - KV cache management is implemented and measurably improves throughput.
 - Comparative benchmarks against PyTorch and llama.cpp are documented.
-- The dashboard gives real-time visibility into scheduler, KV cache, and GPU state.
+- The dashboard gives real-time visibility into scheduler, KV cache, and runtime state.
 - Every V2 subsystem is thoroughly documented, to the same standard as V1.
-- I can confidently explain the entire pipeline, from HTTP request through scheduling, batching, KV cache, GPU execution, to token generation.
+- I can confidently explain the entire pipeline, from HTTP request through scheduling, batching, KV cache, and CPU execution, to token generation.
 
 Most importantly, Titan V2 completes the transformation from someone who builds AI applications into someone who deeply understands the systems that power modern large language model inference — end to end, request to token.
 

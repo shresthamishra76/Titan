@@ -1,15 +1,15 @@
 # Titan (V1)
 
-> **A Production-Style LLM Runtime Built From Scratch — Phase 1: CPU + Basic CUDA Inference**
+> **A Production-Style LLM Runtime Built From Scratch — Phase 1: CPU Inference**
 
 **Author:** Shrestha Mishra
 **Status:** Planning
 **Version:** 1.0
 **Duration:** ~6–8 Weeks
 **Target:** End of August 2026
-**Language:** C++20, CUDA, Python (Tooling)
+**Language:** C++20, Python (Tooling)
 
-> This is **V1** of a two-phase project. It covers Milestones 1–3 (CPU runtime, optimization, basic CUDA). The full production-serving vision (scheduler, continuous batching, OpenAI-compatible API, dashboard) is scoped separately in [PRD-v2.md](PRD-v2.md) and begins after V1 ships.
+> This is **V1** of a two-phase project. It covers Milestones 1–2 (CPU runtime, optimization). The full production-serving vision (scheduler, continuous batching, OpenAI-compatible API, dashboard) is scoped separately in [PRD-v2.md](PRD-v2.md) and begins after V1 ships.
 
 ---
 
@@ -21,19 +21,19 @@ Unlike most AI projects, Titan is **not** another chatbot, RAG application, AI a
 
 Instead, Titan focuses on the engineering challenges that exist **underneath** ChatGPT.
 
-V1 takes the project from a tensor library to a working transformer inference engine — first on CPU, then accelerated on GPU with hand-written CUDA kernels. It stops short of production serving (scheduler, batching, API layer) — that's V2.
+V1 takes the project from a tensor library to a working transformer inference engine running on CPU, optimized through profiling, threading, and SIMD. It stops short of production serving (scheduler, batching, API layer) — that's V2.
 
 The ultimate objective is educational, and personal.
 
-By the end of V1, I should understand — not just use — the tensor math, memory layout, and GPU programming techniques employed by modern AI companies including OpenAI, Anthropic, xAI, NVIDIA, Together AI, Fireworks AI, and vLLM.
+By the end of V1, I should understand — not just use — the tensor math, memory layout, and CPU performance techniques employed by modern AI companies including OpenAI, Anthropic, xAI, NVIDIA, Together AI, Fireworks AI, and vLLM.
 
 ---
 
 # Mission Statement
 
-Build the CPU and basic CUDA inference core of a modern LLM runtime from first principles while documenting every architectural decision, optimization, benchmark, and tradeoff.
+Build the CPU inference core of a modern LLM runtime from first principles while documenting every architectural decision, optimization, benchmark, and tradeoff.
 
-The repository should teach someone how LLM inference actually works under the hood, and double as visible evidence of the author going from zero C++ experience to writing GPU kernels.
+The repository should teach someone how LLM inference actually works under the hood, and double as visible evidence of the author going from zero C++ experience to a working transformer runtime.
 
 ---
 
@@ -52,14 +52,12 @@ Scheduler
       ↓
 Runtime
       ↓
-GPU Kernels
-      ↓
 Transformer Execution
       ↓
 Generated Tokens
 ```
 
-V1 of Titan builds the bottom half of that stack: Runtime → GPU Kernels → Transformer Execution → Generated Tokens. The top half (HTTP Request → Scheduler) is V2.
+V1 of Titan builds the bottom half of that stack: Runtime → Transformer Execution → Generated Tokens. The top half (HTTP Request → Scheduler) is V2.
 
 ---
 
@@ -69,12 +67,10 @@ I have **no prior C++ experience** going into this project. C++ fluency is a fir
 
 1. **Milestone 1 (tensor library, tokenizer, loader)** — basic syntax, classes, RAII, ownership, `std::vector`/`std::unique_ptr`, references vs pointers, build systems (CMake).
 2. **Milestone 2 (optimization)** — templates, move semantics, threading (`std::thread`, mutexes), SIMD intrinsics.
-3. **Milestone 3 (CUDA)** — CUDA C++ specifics (device/host memory, kernel launch syntax, grid/block indexing) — introduced only after core C++ fundamentals from 1–2 are solid.
 
 Reference material alongside the papers below:
 - [cppreference.com](https://en.cppreference.com/) — canonical language/standard-library reference
 - *Effective Modern C++* (Scott Meyers) — idiomatic modern C++ (move semantics, smart pointers, templates)
-- NVIDIA CUDA C++ Programming Guide (already listed under Papers & References)
 
 Each Milestone 1–2 issue should note which C++ concept it's teaching, so the commit history reads as a legible progression, not just a feature list.
 
@@ -86,10 +82,10 @@ V1 is explicitly calibrated to produce evidence of **MTS (Member of Technical St
 
 Concretely, that means:
 
-- Every issue and PR should demonstrate a specific competency a systems interviewer would care about: memory management, numerical correctness, performance measurement, low-level hardware understanding (CPU cache behavior, GPU memory hierarchy).
-- Optimization work (Milestone 2–3) must show **before/after benchmarks**, not just "made it faster." Reviewers should be able to see the profiling data that motivated each change.
+- Every issue and PR should demonstrate a specific competency a systems interviewer would care about: memory management, numerical correctness, performance measurement, low-level hardware understanding (CPU cache behavior, memory access patterns).
+- Optimization work (Milestone 2) must show **before/after benchmarks**, not just "made it faster." Reviewers should be able to see the profiling data that motivated each change.
 - The repo is **open-sourced from day one**. Commit messages, PR descriptions, and issue writeups are public artifacts — write them for an external technical reader, not as private notes to self. See GitHub Workflow below.
-- The C++-novice-to-CUDA-kernels arc (see Learning Track) is itself part of the narrative — don't hide the learning curve, document it. A reviewer seeing deliberate, well-explained progression is more compelling than a repo that looks like it appeared fully-formed.
+- The C++-novice-to-transformer-runtime arc (see Learning Track) is itself part of the narrative — don't hide the learning curve, document it. A reviewer seeing deliberate, well-explained progression is more compelling than a repo that looks like it appeared fully-formed.
 
 ---
 
@@ -97,7 +93,7 @@ Concretely, that means:
 
 ## Primary Goal
 
-Develop a deep understanding of modern LLM inference systems — and of C++ itself — by implementing a CPU and CUDA inference engine from scratch.
+Develop a deep understanding of modern LLM inference systems — and of C++ itself — by implementing a CPU inference engine from scratch.
 
 ---
 
@@ -109,8 +105,6 @@ Understand
 - Transformer execution
 - Tensor computation
 - CPU performance (SIMD, threading, cache behavior)
-- GPU programming
-- CUDA
 - Model loading
 - Tokenization
 - Sampling
@@ -174,7 +168,7 @@ The following are part of the full Titan vision but are explicitly deferred to V
 - Advanced sampling (speculative decoding)
 - OpenAI-compatible API layer
 - Dashboard
-- Benchmark suite against external frameworks (PyTorch, llama.cpp) — V1 benchmarks Titan CPU vs Titan CUDA only
+- Benchmark suite against external frameworks (PyTorch, llama.cpp) — V1 benchmarks Titan CPU baseline vs optimized CPU only
 
 ---
 
@@ -237,11 +231,11 @@ Every subsystem should include
 
                    │
 
- Tensor Engine + CUDA Kernels
+        Tensor Engine
 
                    │
 
-      CPU Backend / GPU Backend
+          CPU Backend
 
                    │
 
@@ -273,7 +267,6 @@ Responsibilities
 Future (V2+)
 
 - Mixed precision
-- Advanced GPU tensor features (see CUDA Backend)
 
 ---
 
@@ -331,26 +324,6 @@ Responsible for
 
 ---
 
-## CUDA Backend
-
-Basic GPU acceleration — the first hands-on CUDA work in the project.
-
-Implement custom kernels for
-
-- MatMul
-- LayerNorm
-- Softmax
-- Attention
-- memory copies
-
-Future (V2+)
-
-- FlashAttention
-- Tensor Core kernels
-- kernel fusion
-
----
-
 ## Sampling Engine (basic)
 
 Implement
@@ -371,15 +344,14 @@ Future (V2)
 
 Benchmark
 
-- Titan CPU
-- Titan CUDA
+- Titan CPU baseline
+- Titan CPU optimized
 
 Measure
 
 - tokens/sec
 - latency
 - memory
-- GPU utilization
 
 External comparisons (PyTorch, llama.cpp) are V2 scope.
 
@@ -426,25 +398,7 @@ C++ concepts introduced: templates, move semantics, `std::thread`/synchronizatio
 
 ---
 
-## Milestone 3
-
-CUDA Runtime
-
-Deliverables
-
-- GPU tensors
-- CUDA kernels
-- memory manager
-
-Goal
-
-Run transformer inference on GPU.
-
-C++/CUDA concepts introduced: device/host memory management, kernel launch configuration, grid/block/thread indexing.
-
----
-
-**Milestones 4 and 5 (Inference Runtime, Production Runtime) are V2 scope — see [PRD-v2.md](PRD-v2.md).**
+**Milestones 3 and 4 (Inference Runtime, Production Runtime) are V2 scope — see [PRD-v2.md](PRD-v2.md).**
 
 ---
 
@@ -459,11 +413,10 @@ design/
 benchmarks/
 profiling/
 papers/
-learning/          # C++/CUDA notes as I learn each concept
+learning/          # C++ notes as I learn each concept
 
 runtime/
 tensor/
-cuda/
 memory/
 sampling/
 models/
@@ -514,7 +467,7 @@ Each issue should include
 - Stretch goals
 - (Milestone 1–2 only) Which C++ concept this issue teaches
 
-Issues should be grouped into Milestones corresponding to the development roadmap (1, 2, 3 for V1).
+Issues should be grouped into Milestones corresponding to the development roadmap (1, 2 for V1).
 
 Every merged issue should leave the repository in a working state.
 
@@ -545,7 +498,6 @@ Core references include
 - Attention Is All You Need
 - RoFormer
 - FlashAttention (read for context even though V1 doesn't implement it)
-- CUDA Programming Guide
 - llama.cpp
 - GGUF Specification
 
@@ -558,11 +510,10 @@ Every implementation should reference the paper or source that inspired it.
 Titan V1 is successful if
 
 - It can load and execute a pretrained Llama-family model (TinyLlama) entirely on CPU.
-- It can run the same inference path on CUDA with hand-written kernels.
-- It demonstrates measurable, documented performance improvement from CPU baseline → optimized CPU → CUDA.
-- Every V1 subsystem (tensor engine, model loader, tokenizer, transformer runtime, CUDA backend) is thoroughly documented.
+- It demonstrates measurable, documented performance improvement from CPU baseline → optimized CPU.
+- Every V1 subsystem (tensor engine, model loader, tokenizer, transformer runtime) is thoroughly documented.
 - The repository resembles a professional open-source systems project, with commit/issue history that reads as a credible C++ learning + systems engineering narrative.
-- I can confidently explain every stage of the V1 pipeline, from tensor math to GPU kernel execution.
+- I can confidently explain every stage of the V1 pipeline, from tensor math to token generation.
 - The result is something I can point to in an MTS interview at OpenAI/xAI/Anthropic-tier companies as evidence of systems ability.
 
 ---
@@ -578,7 +529,7 @@ The implementation process should begin by generating the engineering artifacts 
 Follow the structured planning workflow:
 
 1. Architecture Documentation
-2. GitHub Issues (Milestones 1–3)
+2. GitHub Issues (Milestones 1–2)
 3. GitHub Milestones
 4. GitHub Labels
 5. Dependency Graph
@@ -600,4 +551,4 @@ Development should always follow this workflow:
 8. Open a pull request.
 9. Review and merge.
 
-The goal is not simply to build a working CPU/CUDA inference engine, but to develop a deep understanding of every subsystem involved — and to come out the other side fluent in C++ and ready to demonstrate that fluency to top-tier AI infrastructure teams.
+The goal is not simply to build a working CPU inference engine, but to develop a deep understanding of every subsystem involved — and to come out the other side fluent in C++ and ready to demonstrate that fluency to top-tier AI infrastructure teams.
