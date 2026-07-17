@@ -8,10 +8,10 @@ This directory documents Titan's architecture, one file per subsystem. Each subs
 | --- | --- | --- |
 | [dependency-graph.md](dependency-graph.md) | Build order across all milestones | ✅ |
 | [tensor.md](tensor.md) | Tensor Engine (Milestone 1) | ✅ |
-| tokenizer.md | Tokenizer / BPE (Milestone 1) | ⏳ |
-| model-loader.md | GGUF Loader (Milestone 1) | ⏳ |
-| transformer-runtime.md | Transformer Runtime (Milestone 1) | ⏳ |
-| sampling.md | Sampling Engine (Milestone 1) | ⏳ |
+| [tokenizer.md](tokenizer.md) | Tokenizer / BPE (Milestone 1) | ✅ |
+| [model-loader.md](model-loader.md) | GGUF Loader (Milestone 1) | ✅ |
+| [transformer-runtime.md](transformer-runtime.md) | Transformer Runtime (Milestone 1) | ✅ |
+| [sampling.md](sampling.md) | Sampling Engine (Milestone 1) | ✅ |
 
 ## High-level architecture (V1)
 
