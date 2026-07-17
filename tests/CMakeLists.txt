@@ -9,10 +9,11 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(titan_tests
     tensor_test.cpp
+    tokenizer_test.cpp
 )
 
 target_link_libraries(titan_tests
-    PRIVATE titan_tensor GTest::gtest_main
+    PRIVATE titan_tensor titan_tokenizer GTest::gtest_main
 )
 
 include(GoogleTest)

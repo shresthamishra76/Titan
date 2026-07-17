@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(TITAN_BUILD_TESTS "Build test suite" ON)
 
 add_subdirectory(runtime/tensor)
+add_subdirectory(runtime/tokenizer)
 
 if(TITAN_BUILD_TESTS)
   enable_testing()
