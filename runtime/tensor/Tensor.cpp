@@ -5,6 +5,12 @@
 #include <limits>
 #include <stdexcept>
 
+#include "ThreadPool.h"
+
+#if defined(__ARM_NEON)
+#include <arm_neon.h>
+#endif
+
 namespace titan {
 namespace {
 
@@ -206,16 +212,40 @@ Tensor matmul(const Tensor& A, const Tensor& B) {
   const Tensor a = A.contiguous();
   const Tensor b = B.contiguous();
   const std::size_t m = a.shape()[0], k = a.shape()[1], n = b.shape()[1];
-  Tensor out(Shape{m, n});
+  Tensor out(Shape{m, n});  // zero-initialized; the kernel accumulates into it
   const float* ad = a.data();
   const float* bd = b.data();
   float* od = out.data();
-  for (std::size_t i = 0; i < m; ++i) {
-    for (std::size_t j = 0; j < n; ++j) {
-      float acc = 0.0f;
-      for (std::size_t p = 0; p < k; ++p) acc += ad[i * k + p] * bd[p * n + j];
-      od[i * n + j] = acc;
+
+  // Cache-friendly ikj ordering: stream B and the output row sequentially and
+  // accumulate, rather than the pointer-chasing ijk dot product. NEON
+  // vectorizes the inner j loop (Milestone 2).
+  auto compute_rows = [&](std::size_t i0, std::size_t i1) {
+    for (std::size_t i = i0; i < i1; ++i) {
+      float* orow = od + i * n;
+      for (std::size_t p = 0; p < k; ++p) {
+        const float aip = ad[i * k + p];
+        const float* brow = bd + p * n;
+        std::size_t j = 0;
+#if defined(__ARM_NEON)
+        const float32x4_t va = vdupq_n_f32(aip);
+        for (; j + 4 <= n; j += 4) {
+          float32x4_t acc = vld1q_f32(orow + j);
+          const float32x4_t vb = vld1q_f32(brow + j);
+          acc = vfmaq_f32(acc, va, vb);
+          vst1q_f32(orow + j, acc);
+        }
+#endif
+        for (; j < n; ++j) orow[j] += aip * brow[j];
+      }
     }
+  };
+
+  // Parallelize only when the work is large enough to amortize threading.
+  if (m >= 64 && m * n * k >= (1u << 18)) {
+    global_pool().parallel_for(m, compute_rows);
+  } else {
+    compute_rows(0, m);
   }
   return out;
 }

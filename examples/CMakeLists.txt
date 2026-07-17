@@ -10,3 +10,11 @@ target_link_libraries(titan_generate
         titan_transformer
         titan_sampling
 )
+
+add_executable(titan_benchmark
+    benchmark.cpp
+)
+
+target_link_libraries(titan_benchmark
+    PRIVATE titan_tensor
+)

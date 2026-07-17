@@ -1,11 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <atomic>
 #include <cmath>
 #include <cstddef>
 #include <stdexcept>
 #include <vector>
 
 #include "Tensor.h"
+#include "ThreadPool.h"
 
 using titan::Tensor;
 
@@ -186,4 +188,43 @@ TEST(TensorTest, CloneIsIndependent) {
   b.at({0}) = 99.0f;
   EXPECT_FLOAT_EQ(a.at({0}), 1.0f);
   EXPECT_FLOAT_EQ(b.at({0}), 99.0f);
+}
+
+// Milestone 2: the optimized matmul (cache-friendly + NEON + threaded above a
+// size threshold) must match a naive reference. 70x70x70 triggers the parallel
+// path.
+TEST(TensorTest, MatmulLargeMatchesNaiveReference) {
+  constexpr std::size_t M = 70, K = 70, N = 70;
+  std::vector<float> ad(M * K), bd(K * N);
+  for (std::size_t i = 0; i < ad.size(); ++i) ad[i] = std::sin(0.1f * static_cast<float>(i));
+  for (std::size_t i = 0; i < bd.size(); ++i) bd[i] = std::cos(0.07f * static_cast<float>(i));
+  Tensor a({M, K}, ad), b({K, N}, bd);
+  Tensor c = titan::matmul(a, b);
+  for (std::size_t i = 0; i < M; ++i) {
+    for (std::size_t j = 0; j < N; ++j) {
+      float acc = 0.0f;
+      for (std::size_t p = 0; p < K; ++p) acc += ad[i * K + p] * bd[p * N + j];
+      EXPECT_NEAR(c.at({i, j}), acc, 1e-3);
+    }
+  }
+}
+
+TEST(ThreadPoolTest, ParallelForCoversEveryIndexExactlyOnce) {
+  titan::ThreadPool pool(3);
+  std::vector<int> hits(1000, 0);
+  pool.parallel_for(1000, [&](std::size_t b, std::size_t e) {
+    for (std::size_t i = b; i < e; ++i) hits[i] += 1;
+  });
+  for (int h : hits) EXPECT_EQ(h, 1);
+}
+
+TEST(ThreadPoolTest, ParallelForAccumulates) {
+  titan::ThreadPool pool(4);
+  std::atomic<long> sum{0};
+  pool.parallel_for(10000, [&](std::size_t b, std::size_t e) {
+    long s = 0;
+    for (std::size_t i = b; i < e; ++i) s += static_cast<long>(i);
+    sum += s;
+  });
+  EXPECT_EQ(sum.load(), 10000L * 9999 / 2);
 }
