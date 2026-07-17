@@ -11,6 +11,7 @@ add_subdirectory(runtime/tensor)
 add_subdirectory(runtime/tokenizer)
 add_subdirectory(runtime/models)
 add_subdirectory(runtime/transformer)
+add_subdirectory(runtime/sampling)
 
 if(TITAN_BUILD_TESTS)
   enable_testing()

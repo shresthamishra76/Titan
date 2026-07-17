@@ -12,10 +12,11 @@ add_executable(titan_tests
     tokenizer_test.cpp
     gguf_test.cpp
     transformer_test.cpp
+    sampling_test.cpp
 )
 
 target_link_libraries(titan_tests
-    PRIVATE titan_tensor titan_tokenizer titan_models titan_transformer GTest::gtest_main
+    PRIVATE titan_tensor titan_tokenizer titan_models titan_transformer titan_sampling GTest::gtest_main
 )
 
 include(GoogleTest)
