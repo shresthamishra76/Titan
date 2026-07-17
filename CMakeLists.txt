@@ -10,6 +10,7 @@ option(TITAN_BUILD_TESTS "Build test suite" ON)
 add_subdirectory(runtime/tensor)
 add_subdirectory(runtime/tokenizer)
 add_subdirectory(runtime/models)
+add_subdirectory(runtime/transformer)
 
 if(TITAN_BUILD_TESTS)
   enable_testing()
